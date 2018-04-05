@@ -9,7 +9,9 @@
   "author": "IBR Dev",
   "license": "MIT",
   "dependencies": {
-    "socket.io": "*",
-    "express": "*"
+    "express": "*",
+    "mysql2": "^1.5.3",
+    "sequelize": "^4.37.5",
+    "socket.io": "*"
   }
 }
