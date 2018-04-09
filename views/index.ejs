@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ChatApp</title>
+
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body{
+            margin-top:30px;
+        }
+        .card{
+            background:rgb(163, 159, 159);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div id="userFormArea" class="row justify-content-md-center">
+            <div class="col-5">
+                <form id="userForm" action="/login" method="POST">
+                    <!-- <div class="form-group"> -->
+                        <label class="col-form-label" for="username">Enter Username</label>
+                        <input type="text" name="username" class="form-control" id="username">
+                        <label class="col-form-label" for="password">Enter Password</label>
+                        <input type="password" name="password" class="form-control" id="password">
+                        <br>
+                        <input type="submit" class="btn btn-primary" value="Login">
+                    <!-- </div> -->
+                </form>
+            </div>
+        </div>
+
+    </div>
+          
+    <script>
+        $(function(){
+            const socket = io.connect(),
+                $messageForm = $('#messageForm'),
+                $message = $('#message'),
+                $chat = $('#chat'),
+                $messageArea = $('#messageArea'),
+                $userFormArea = $('#userFormArea'),
+                $userForm = $('#userForm'),
+                $users = $('#users'),
+                $username = $('#username'),
+                $password = $('#password');
+
+            $userForm.submit((e)=>{
+                // e.preventDefault();
+                userInfo = {username: $username.val(),password:$password.val()}
+                socket.emit('new user', userInfo, (data)=>{
+
+                });
+            });
+        });
+    </script>
+    
+</body>
+</html>

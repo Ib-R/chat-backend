@@ -6,51 +6,41 @@ const privateKey = fs.readFileSync('sslcert/key.pem', 'utf8'),
 
 const express = require('express'),
     app = express(),
+    cookieParser = require('cookie-parser'),
+    bodyParser = require('body-parser'),
+    session = require('express-session'),
+    redis = require("redis"),
+    client = redis.createClient(),
+    RedisStore = require('connect-redis')(session),
+    passport = require('passport'), // Auth modules
+    LocalStrategy = require('passport-local').Strategy,
     server = require('https').createServer(credentials,app), //Starting server
     io = require('socket.io').listen(server),
     path = require('path'),
     users = [];
     connections = [];
-    Sql = require('sequelize'), // Setting Database connection
-    sql = new Sql('chat','root','',{
-        host: 'localhost',
-        dialect: 'mysql',
-        operatorsAliases: false,
-        pool:{
-            max: 5,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-        }
-    });
+    Sql = require('orm'), // Setting Database connection
+    Sql.connect("mysql://root:@localhost/chat", function (err, db) {
+    if (err) throw err;
+        console.log('Database connected..')
+        const User = db.define("users", {
+            username   : String,
+            password   : String,
+        }, {
+            methods: {
+                fullName: function () {
+                    return this.name + ' ' + this.surname;
+                }
+            },
+        });
 
-//Test db connection
-sql
-  .authenticate()
-  .then(() => {
-    console.log('Connection has been established successfully.');
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
-
-// Models
-const User = sql.define('user', {
-    id: {
-      type: Sql.INTEGER, autoIncrement:true, primaryKey:true
-    },
-    username: {
-      type: Sql.STRING
-    },
-    password: {
-        type: Sql.STRING
-    },
-    profile_pic: {
-        type: Sql.STRING
-    }
-    
-  });
-  
+        client.on('error', function (err) {
+            console.log("Error " + err);
+        });
+        
+        client.on('connect', function () {
+            console.log("redis connected...");
+        });
 //   // force: true will drop the table if it already exists
 //   User.sync({force: true}).then(() => {
 //     // Table created
@@ -61,22 +51,88 @@ const User = sql.define('user', {
 
 // Static asset folder
 app.use(express.static('public'));
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(session({ store: new RedisStore(),
+        secret: 'keyboard cat',
+        resave: false,
+        saveUninitialized: false,
+        cookie: { secure: true } })); 
+ // Passport init
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(cookieParser());
+
+// set the view engine to ejs
+app.set('view engine', 'ejs');
 
 server.listen(process.env.PORT || 3000);
-console.log('Server running...')
+console.log('Server running...');
 
+// Middleware
+// Passport middleware
+passport.use(new LocalStrategy(
+    function(username, password, done) {
+      User.one({ username: username }, function(err, user) {
+          console.log('In the passport!')
+        if (err) { return done(err); }
+        if (!user) {
+          console.log('Not a user');
+          return done(null, false, { message: 'Incorrect username.' });
+        }
+        // if (!user.validPassword(password)) {
+        //   return done(null, false, { message: 'Incorrect password.' });
+        // }
+        return done(null, user);
+      });
+    }
+  ));
+
+function auth(req, res, next){
+    if(req.isAuthenticated()){
+        return next();
+    }else{
+        console.log('Not Authenticated');
+        res.redirect('/');
+        }
+    }
+
+  passport.serializeUser(function(user, done) {
+    done(null, user);
+  });
+  
+  passport.deserializeUser(function(user, done) {
+      console.log('Deserialized user id '+user.id);
+    User.get(user.id, function(err, user) {
+      done(err, user);
+    });
+  });
+
+// Routes
 app.get('/', function(req, res){
-    res.sendFile(__dirname + '/index.html');
+    res.render('index');
 });
+app.post('/login', 
+    passport.authenticate('local',{successRedirect: '/chat',failureRedirect: '/'}));
+
+app.get('/chat', auth, function(req, res){
+    id = req.user.id;
+    console.log('User at route '+id);
+    User.get(id, (err, user)=>{
+        console.log('Username is '+ user.username);
+        users.push(user.username);
+        res.render('chat', {user:user });
+    })
+});
+
+// Starting socket connection
 
 io.sockets.on('connection', function(socket){
     connections.push(socket);
     console.log('Connected: %s sockets connected', connections.length);
 
-    // Disconnect socket
     socket.on('disconnect', function(data){
         users.splice(users.indexOf(socket.username), 1);
-        updateUsernames();
         connections.splice(connections.indexOf(socket),1);
         console.log('Disconnected: %s sockets connected', connections.length);
     });
@@ -84,22 +140,28 @@ io.sockets.on('connection', function(socket){
     // Send Message
     socket.on('send message', function(data){
         console.log(data);
-        io.sockets.emit('new message', {msg: data, user: socket.username});
+        io.sockets.emit('new message', {msg: data.msg, user: data.user});
+
     });
 
-    socket.on('new user', function(data, callback){
-        callback(true);
-        // Create user in the db
-        User.create({
-                  username: data.username,
-                  password: data.password
-                });
-        socket.username = data.username;
-        users.push(socket.username);
-        updateUsernames();
-    });
+    // socket.on('new user', function(data, callback){
+    //     // callback(true);
+    //     updateUsernames();
+    //     // User.create({
+    //     //           username: data.username,
+    //     //           password: data.password
+    //     //         });
+    //     // socket.username = data.username;
+
+    //     // User.findOne({ where: {username: data.username} }).then(user => {
+    //     //     console.log(user.username);
+    //     //     socket.username = user.username;
+    //     //     users.push(socket.username);
+    //     // })
+    // });
 
     function updateUsernames(){
         io.sockets.emit('get users', users);
     }
+});
 });

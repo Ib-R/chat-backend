@@ -2,15 +2,26 @@
   "name": "chat",
   "version": "1.0.0",
   "description": "Chat",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "IBR Dev",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.18.2",
+    "connect-redis": "^3.3.3",
+    "cookie-parser": "^1.4.3",
+    "ejs": "^2.5.8",
     "express": "*",
+    "express-session": "^1.15.6",
+    "html": "^1.0.0",
+    "mysql": "^2.15.0",
     "mysql2": "^1.5.3",
+    "orm": "^4.0.2",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "redis": "^2.8.0",
     "sequelize": "^4.37.5",
     "socket.io": "*"
   }
