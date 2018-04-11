@@ -1,0 +1,72 @@
+/* Chat styling */
+body{
+    margin-top:30px;
+    background-image: url('/imgs/bg1.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+@media(min-width:1025px){
+    body{
+        background-image: url('/imgs/bg.jpg');
+    }
+}
+p{
+    margin-bottom: 0;
+}
+#chat-h{
+    width: 100%;
+    height: 4rem;
+    background-color:#404040eb;
+    padding: 1rem;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+#typing{
+    position: absolute;
+    bottom: 1px;
+}
+
+#username{
+    position: relative;
+    color:whitesmoke;
+    font-size: 1.4rem;
+    bottom: 0.5rem;
+}
+
+#chat{
+    width: 100%;
+    padding: 18px;
+    position: absolute;
+    bottom: 47px;
+    top: 3rem;
+    overflow-y: scroll;
+    margin-bottom: 0;
+}
+
+#messageForm{
+    margin-right: 10px;
+    margin-left: 10px;
+    bottom: 5px;
+}
+#msg-submit{
+    width: 4rem;
+    margin-left: -4rem;
+    z-index: 1;
+}
+#message{
+    padding-right: 4rem;
+}
+.own-msg{
+    margin: 0.1rem;
+    padding: 0.7rem;
+    border-radius: 5px;
+    max-width: 50%;
+    overflow-wrap: break-word;
+}
+
+.msg{
+    margin: 0.1rem;
+    padding: 0.7rem;
+    border-radius: 5px;
+    max-width: 50%;
+    overflow-wrap: break-word;
+}

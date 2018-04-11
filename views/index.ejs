@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>ChatApp</title>
 
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
@@ -20,20 +21,29 @@
 </head>
 <body>
     <div class="container">
+        <div id="userFormArea">
+                <form class="form-signin" id="userForm" action="/login" method="POST">
+                <div class="text-center">
+                    <img class="mb-4" src="https://getbootstrap.com/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">
+                    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+                </div>
+                <% include  partials/msgs %>
 
-        <div id="userFormArea" class="row justify-content-md-center">
-            <div class="col-5">
-                <form id="userForm" action="/login" method="POST">
                     <!-- <div class="form-group"> -->
-                        <label class="col-form-label" for="username">Enter Username</label>
-                        <input type="text" name="username" class="form-control" id="username">
-                        <label class="col-form-label" for="password">Enter Password</label>
-                        <input type="password" name="password" class="form-control" id="password">
+                    <div class="form-label-group">
+                        <input type="text" placeholder="Enter Username" name="username" class="form-control" id="username">
+                        <label for="username">Enter Username</label>
+                    </div>  
+                    <div class="form-label-group"> 
+                        <input type="password" placeholder="Enter Password" name="password" class="form-control" id="password">
+                        <label for="password">Enter Password</label>
+                    </div>  
+
                         <br>
-                        <input type="submit" class="btn btn-primary" value="Login">
+                        <input type="submit" class="btn btn-lg btn-primary btn-block" value="Login">
                     <!-- </div> -->
+                    <p class="text-center mt-5 mb-3 text-muted">&copy;2018</p>
                 </form>
-            </div>
         </div>
 
     </div>

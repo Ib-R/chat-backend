@@ -8,6 +8,8 @@ const express = require('express'),
     app = express(),
     cookieParser = require('cookie-parser'),
     bodyParser = require('body-parser'),
+    flash = require('connect-flash'),
+    bcrypt = require('bcryptjs'),
     session = require('express-session'),
     redis = require("redis"),
     client = redis.createClient(),
@@ -21,8 +23,13 @@ const express = require('express'),
     connections = [];
     Sql = require('orm'), // Setting Database connection
     Sql.connect("mysql://root:@localhost/chat", function (err, db) {
-    if (err) throw err;
+    if (err){
+        console.log('Database connection failure');
+        console.log(err);
+    }else{
         console.log('Database connected..')
+    }
+    // Defining models
         const User = db.define("users", {
             username   : String,
             password   : String,
@@ -41,16 +48,8 @@ const express = require('express'),
         client.on('connect', function () {
             console.log("redis connected...");
         });
-//   // force: true will drop the table if it already exists
-//   User.sync({force: true}).then(() => {
-//     // Table created
-//     return User.create({
-//       username: 'Admin'
-//     });
-//   });
 
-// Static asset folder
-app.use(express.static('public'));
+app.use(express.static('public')); // Set assets folder
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({ store: new RedisStore(),
@@ -62,6 +61,13 @@ app.use(session({ store: new RedisStore(),
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser());
+app.use(flash());
+app.use((req,res,next)=>{
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    res.locals.error = req.flash('error');
+    next();
+});
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');
@@ -80,14 +86,39 @@ passport.use(new LocalStrategy(
           console.log('Not a user');
           return done(null, false, { message: 'Incorrect username.' });
         }
-        // if (!user.validPassword(password)) {
-        //   return done(null, false, { message: 'Incorrect password.' });
-        // }
-        return done(null, user);
+        console.log('The password',user.password);
+
+        if (passCheck(password, user.password,(err, match)=>{
+            console.log(match);
+            if(err) throw err;
+            if(match){
+                return done(null, user);
+            }else{
+                return done(null, false, { message: 'Incorrect password.'});
+            }
+        }));
       });
     }
   ));
 
+//   // create hashed password
+//   bcrypt.genSalt(10, function(err, salt) {
+//     bcrypt.hash("bosa", salt, function(err, hash) {
+//         console.log('Hash is',hash);
+//     });
+// });
+
+// Check password
+function passCheck(password, hash, callback){
+    bcrypt.compare(password, hash, function(err, match) {
+        if(err){console.log(err);
+        }else{
+            callback(null, match);
+        }
+    });
+}  
+
+// Check if user authenticated
 function auth(req, res, next){
     if(req.isAuthenticated()){
         return next();
@@ -113,14 +144,13 @@ app.get('/', function(req, res){
     res.render('index');
 });
 app.post('/login', 
-    passport.authenticate('local',{successRedirect: '/chat',failureRedirect: '/'}));
+    passport.authenticate('local',{successRedirect: '/chat',failureRedirect: '/', failureFlash: true}));
 
 app.get('/chat', auth, function(req, res){
     id = req.user.id;
     console.log('User at route '+id);
     User.get(id, (err, user)=>{
         console.log('Username is '+ user.username);
-        users.push(user.username);
         res.render('chat', {user:user });
     })
 });
@@ -129,7 +159,7 @@ app.get('/chat', auth, function(req, res){
 
 io.sockets.on('connection', function(socket){
     connections.push(socket);
-    console.log('Connected: %s sockets connected', connections.length);
+    console.log('Connection: %s sockets connected', connections.length,'socketID:',socket.id);
 
     socket.on('disconnect', function(data){
         users.splice(users.indexOf(socket.username), 1);
@@ -144,24 +174,8 @@ io.sockets.on('connection', function(socket){
 
     });
 
-    // socket.on('new user', function(data, callback){
-    //     // callback(true);
-    //     updateUsernames();
-    //     // User.create({
-    //     //           username: data.username,
-    //     //           password: data.password
-    //     //         });
-    //     // socket.username = data.username;
-
-    //     // User.findOne({ where: {username: data.username} }).then(user => {
-    //     //     console.log(user.username);
-    //     //     socket.username = user.username;
-    //     //     users.push(socket.username);
-    //     // })
-    // });
-
-    function updateUsernames(){
-        io.sockets.emit('get users', users);
-    }
+    socket.on('typing', (data)=>{
+        socket.broadcast.emit('typing', data);
+    });
 });
 });

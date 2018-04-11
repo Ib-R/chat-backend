@@ -7,38 +7,25 @@
     <title>ChatApp</title>
 
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/chat.css">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
-    <style>
-        body{
-            margin-top:30px;
-        }
-        .card{
-            background:rgb(163, 159, 159);
-        }
-    </style>
+
 </head>
 <body>
-    <div id="messageArea" class="row">
-        <div class="col-lg-3">
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="card-title">Online</h3>
-                    <ul class="list-group" id="users"></ul>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-9">
-            <div class="chat" id="chat"></div>
-
-            <form id="messageForm">
-                <!-- <div class="form-group"> -->
-                    <label>Enter Message</label>
-                    <input class="form-control" id="message">
-                    <br>
-                    <input type="submit" class="btn btn-primary" value="Send">
-                <!-- </div> -->
+    <div id="chat-h" class="fixed-top">
+        <p id="username"></p><br>
+        <p id="typing" class="text-white"></p>
+    </div>
+    <% include  partials/msgs %>
+    <div id="messageArea" class="container row">
+        <div class="">
+            <ul class="chat" id="chat"></ul>
+            <form id="messageForm" class="fixed-bottom row justify-content-md-center" autocomplete="off">
+                <label class="sr-only">Enter Message</label>
+                <input type="text" class="form-control col-lg-8" id="message" placeholder="Enter Message">
+                <input type="submit" class="btn btn-primary" id="msg-submit" value="Send">
             </form>
         </div>
     </div>
@@ -52,9 +39,31 @@
                 $userFormArea = $('#userFormArea'),
                 $userForm = $('#userForm'),
                 $users = $('#users'),
-                $username = $('#username'),
-                $password = $('#password');                
-            
+                $userHead = $('#username'),
+                $typing = $('#typing');
+                var timer;
+
+            function updateScroll(){
+                chat.scrollTop = chat.scrollHeight;
+            }
+            $message.on('input', ()=>{
+                socket.emit('typing', '<%= user.username %>');
+            });
+            socket.on('typing', (data)=>{
+                $typing.html(data+' is typing...');
+                clearTimeout(timer);
+                timer = setTimeout(()=>{$typing.html('');},700);
+            });
+
+            // Display usernames on header
+            function updateUserHead(user){
+                const nameCheck = $userHead.html();
+                if( nameCheck === ''){
+                    $userHead.html(user);
+                }else if(nameCheck.indexOf(user) < 0){ // Check if username already exists
+                    $userHead.append(', '+user);
+                }
+            }
 
             $messageForm.submit((e)=>{
                 e.preventDefault();
@@ -64,16 +73,15 @@
             });
 
             socket.on('new message', (data)=>{
-                $chat.append('<div class="card" style="margin:10px"><div class="card-body"><p class="card-text"><strong>'+data.user+'</strong>: '+data.msg+'</p></div></div>');
+                if(data.user == '<%= user.username %>'){
+                    $chat.append('<div class="float-right own-msg bg-secondary"><p class="text-light"><strong>'+data.user+'</strong>: '+data.msg+'</p></div><div class="clearfix"></div>');
+                }else{
+                    $chat.append('<div class="bg-primary float-left msg"><p class="text-light"><strong>'+data.user+'</strong>: '+data.msg+'</p></div><div class="clearfix"></div>');
+                    updateUserHead(data.user);
+                }
+                updateScroll()
             });
 
-            socket.on('get users', (data)=>{
-                 html = '';
-                for(i = 0; i < data.length;i++){
-                    html +='<li class="list-group-item">'+data[i]+'</li>';
-                }
-                $users.html(html);
-            });
         });
     </script>
 </body>
