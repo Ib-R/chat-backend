@@ -8,6 +8,7 @@ const express = require('express'),
     app = express(),
     cookieParser = require('cookie-parser'),
     bodyParser = require('body-parser'),
+    multer = require('multer'),
     flash = require('connect-flash'),
     bcrypt = require('bcryptjs'),
     session = require('express-session'),
@@ -138,6 +139,20 @@ function auth(req, res, next){
       done(err, user);
     });
   });
+// Set storage engine
+ const storage = multer.diskStorage({
+     destination: './public/uploads/',
+     filename: function(req,file,cb){
+         cb(null, file.originalname + '-' + Date.now() + path.extname(file.originalname));
+     }
+ });
+ // Init upload
+ const upload = multer({
+     storage: storage
+ }).single('img');
+
+// Init variable
+var showImg;
 
 // Routes
 app.get('/', function(req, res){
@@ -145,6 +160,22 @@ app.get('/', function(req, res){
 });
 app.post('/login', 
     passport.authenticate('local',{successRedirect: '/chat',failureRedirect: '/', failureFlash: true}));
+
+app.post('/upload',(req,res)=>{
+    upload(req,res,(err)=>{
+        if(err){
+            console.log(err);
+            res.json({ error: err });
+        }else{
+            console.log(req.body.username);
+            showImg(req.file.filename, req.body.username);
+            res.json({
+                message: 'uploaded, file: ' + req.file.filename,
+            });
+            // console.log(req.file);
+        }
+    });
+});
 
 app.get('/chat', auth, function(req, res){
     id = req.user.id;
@@ -155,27 +186,36 @@ app.get('/chat', auth, function(req, res){
     })
 });
 
+startSocket();
+
 // Starting socket connection
-
-io.sockets.on('connection', function(socket){
-    connections.push(socket);
-    console.log('Connection: %s sockets connected', connections.length,'socketID:',socket.id);
-
-    socket.on('disconnect', function(data){
-        users.splice(users.indexOf(socket.username), 1);
-        connections.splice(connections.indexOf(socket),1);
-        console.log('Disconnected: %s sockets connected', connections.length);
-    });
+function startSocket(){
+    io.sockets.on('connection', function(socket){
+        connections.push(socket);
+        console.log('Connection: %s sockets connected', connections.length,'socketID:',socket.id);
     
-    // Send Message
-    socket.on('send message', function(data){
-        console.log(data);
-        io.sockets.emit('new message', {msg: data.msg, user: data.user});
-
+        socket.on('disconnect', function(data){
+            users.splice(users.indexOf(socket.username), 1);
+            connections.splice(connections.indexOf(socket),1);
+            console.log('Disconnected: %s sockets connected', connections.length);
+        });
+        
+        // Send Message
+        socket.on('send message', (data)=>{
+            console.log(data);
+            io.sockets.emit('new message', {msg: data.msg, user: data.user});
+        });
+        // Show image
+        showImg = (img, user)=>{
+            data = {img: img, user: user}
+            io.sockets.emit('show image', data);
+            console.log('Show Image Called with this data:',img);
+        }
+    
+        socket.on('typing', (data)=>{
+            socket.broadcast.emit('typing', data);
+        });
     });
+}
 
-    socket.on('typing', (data)=>{
-        socket.broadcast.emit('typing', data);
-    });
-});
 });

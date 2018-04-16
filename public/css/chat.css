@@ -40,8 +40,15 @@ p{
     top: 3rem;
     overflow-y: scroll;
     margin-bottom: 0;
+    z-index: -1;
 }
-
+#imgBtn{
+    position: absolute;
+    right: 5rem;
+}
+#img{
+    max-width: 8rem;
+}
 #messageForm{
     margin-right: 10px;
     margin-left: 10px;

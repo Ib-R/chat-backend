@@ -6,11 +6,14 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>ChatApp</title>
 
+    <link rel="icon" href="https://image.flaticon.com/teams/slug/freepik.jpg">
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/chat.css">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.js"></script>
 
 </head>
 <body>
@@ -20,15 +23,19 @@
     </div>
     <% include  partials/msgs %>
     <div id="messageArea" class="container row">
-        <div class="">
             <ul class="chat" id="chat"></ul>
-            <form id="messageForm" class="fixed-bottom row justify-content-md-center" autocomplete="off">
+        <div class="fixed-bottom row justify-content-md-center">
+            <form id="messageForm" class="col col-md-8 row" autocomplete="off">
                 <label class="sr-only">Enter Message</label>
-                <input type="text" class="form-control col-lg-8" id="message" placeholder="Enter Message">
+                <input type="text" class="form-control" id="message" placeholder="Enter Message">
                 <input type="submit" class="btn btn-primary" id="msg-submit" value="Send">
+
+                <label id="imgBtn" class="btn btn-primary" for="imgUploadInput">&#9974;</label>
+                <input type="file" style="display:none" name="img" id="imgUploadInput">
             </form>
         </div>
     </div>
+
     <script>
         $(function(){
             const socket = io.connect(),
@@ -40,8 +47,11 @@
                 $userForm = $('#userForm'),
                 $users = $('#users'),
                 $userHead = $('#username'),
-                $typing = $('#typing');
+                $typing = $('#typing'),
+                $imgUpload = $('#imgUploadInput'),
+                $imgForm = $('#imgForm');
                 var timer;
+                
 
             function updateScroll(){
                 chat.scrollTop = chat.scrollHeight;
@@ -54,7 +64,28 @@
                 clearTimeout(timer);
                 timer = setTimeout(()=>{$typing.html('');},700);
             });
+            
+            // File upload
+            $imgUpload.on('change', (e)=>{
+                var data = new FormData();
+                data.append('img', $imgUpload[0].files[0]);
+                data.append('username', '<%= user.username %>');
 
+                fetch('/upload', {
+                    body: data,
+                    method: 'POST',
+                })
+                .then(res => res.json())
+                .then(function(data){
+                    // alert(data.message);
+                })
+                .catch(() => {
+                    alert('error');
+                });
+                console.log($imgUpload[0].files[0]);
+                
+            });
+            
             // Display usernames on header
             function updateUserHead(user){
                 const nameCheck = $userHead.html();
@@ -81,7 +112,15 @@
                 }
                 updateScroll()
             });
-
+            socket.on('show image', (data)=>{
+                if(data.user == '<%= user.username %>'){
+                    $chat.append('<div class="float-right own-msg bg-secondary"><a data-fancybox="ownGallery" href="uploads/'+data.img+'"><img id="img" src="uploads/'+data.img+'"></a></div><div class="clearfix"></div>');
+                }else{
+                    $chat.append('<div class="bg-primary float-left msg"><a data-fancybox="gallery" href="uploads/'+data.img+'"><img id="img" src="uploads/'+data.img+'"></a></div><div class="clearfix"></div>');
+                    updateUserHead(data.user);
+                }
+                updateScroll()
+            });
         });
     </script>
 </body>
