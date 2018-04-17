@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.js"></script>
+    <script src="js/push/push.min.js"></script>
 
 </head>
 <body>
@@ -52,6 +53,20 @@
                 $imgForm = $('#imgForm');
                 var timer;
                 
+            // Init Notfication
+            function spawnNotification(theBody,theIcon,theTitle) {
+                if(!document.hasFocus()){
+                    Push.create(theTitle, {
+                    body: theBody,
+                    icon: 'https://image.flaticon.com/teams/slug/freepik.jpg',
+                    timeout: 4000,
+                    onClick: function () {
+                        window.focus();
+                        this.close();
+                            }
+                        });
+                    }
+                }   
 
             function updateScroll(){
                 chat.scrollTop = chat.scrollHeight;
@@ -68,20 +83,22 @@
             // File upload
             $imgUpload.on('change', (e)=>{
                 var data = new FormData();
-                data.append('img', $imgUpload[0].files[0]);
-                data.append('username', '<%= user.username %>');
+                if($imgUpload[0].files[0] != null){
+                    data.append('img', $imgUpload[0].files[0]);
+                    data.append('username', '<%= user.username %>');
 
-                fetch('/upload', {
-                    body: data,
-                    method: 'POST',
-                })
-                .then(res => res.json())
-                .then(function(data){
-                    // alert(data.message);
-                })
-                .catch(() => {
-                    alert('error');
-                });
+                    fetch('/upload', {
+                        body: data,
+                        method: 'POST',
+                    })
+                    .then(res => res.json())
+                    .then(function(data){
+                        // alert(data.message);
+                    })
+                    .catch(() => {
+                        alert('error');
+                    });
+                }
                 console.log($imgUpload[0].files[0]);
                 
             });
@@ -109,6 +126,7 @@
                 }else{
                     $chat.append('<div class="bg-primary float-left msg"><p class="text-light"><strong>'+data.user+'</strong>: '+data.msg+'</p></div><div class="clearfix"></div>');
                     updateUserHead(data.user);
+                    spawnNotification('You Got new Message','https://image.flaticon.com/teams/slug/freepik.jpg','New Message');
                 }
                 updateScroll()
             });
