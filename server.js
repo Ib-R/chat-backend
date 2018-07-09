@@ -2,7 +2,7 @@ const fs = require('fs');
 // SSL cert.
 const privateKey = fs.readFileSync('sslcert/key.pem', 'utf8'),
     certificate = fs.readFileSync('sslcert/cert.pem', 'utf8'),
-    credentials = {key: privateKey, cert: certificate};
+    credentials = {key: privateKey, cert: certificate}; // add to createServer and mod http to https
 
 const express = require('express'),
     app = express(),
@@ -17,7 +17,7 @@ const express = require('express'),
     RedisStore = require('connect-redis')(session),
     passport = require('passport'), // Auth modules
     LocalStrategy = require('passport-local').Strategy,
-    server = require('https').createServer(credentials,app), //Starting server
+    server = require('http').createServer(app), //Starting server
     io = require('socket.io').listen(server),
     path = require('path'),
     users = [];
@@ -87,7 +87,7 @@ passport.use(new LocalStrategy(
           console.log('Not a user');
           return done(null, false, { message: 'Incorrect username.' });
         }
-        console.log('The password',user.password);
+        // console.log('The password',user.password);
 
         if (passCheck(password, user.password,(err, match)=>{
             console.log(match);
@@ -158,10 +158,25 @@ var showImg;
 app.get('/', function(req, res){
     res.render('index');
 });
-app.post('/login', 
-    passport.authenticate('local',{successRedirect: '/chat',failureRedirect: '/', failureFlash: true}));
+// app.post('/login', 
+//     passport.authenticate('local',{successRedirect: '/chat',failureRedirect: '/', failureFlash: true}));
+
+app.post('/login', (req, res, next)=> {
+    passport.authenticate('local', (err, user, info)=> {
+      res.header('Access-Control-Allow-Origin','*');  
+      if (err) { res.json({message:info}); return next(err); }
+      if (!user) { return res.json({message:info}); }
+      req.logIn(user, function(err) {
+          console.log("login function!");
+        if (err) { return next(err); }
+        res.json({user:user.username,message:info});
+        return  console.log("End of login route");
+      });
+    })(req, res, next);
+  });
 
 app.post('/upload',(req,res)=>{
+    res.header('Access-Control-Allow-Origin','*');  
     upload(req,res,(err)=>{
         if(err){
             console.log(err);
@@ -172,7 +187,7 @@ app.post('/upload',(req,res)=>{
             res.json({
                 message: 'uploaded, file: ' + req.file.filename,
             });
-            // console.log(req.file);
+            console.log(req.file);
         }
     });
 });

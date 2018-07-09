@@ -1,6 +1,6 @@
 /* Chat styling */
 body{
-    margin-top:30px;
+    /* margin-top:30px; */
     background-image: url('/imgs/bg1.jpg');
     background-size: cover;
     background-repeat: no-repeat;
@@ -40,7 +40,7 @@ p{
     top: 3rem;
     overflow-y: scroll;
     margin-bottom: 0;
-    z-index: -1;
+    z-index: 1;
 }
 #imgBtn{
     position: absolute;
