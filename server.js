@@ -12,9 +12,9 @@ const express = require('express'),
     flash = require('connect-flash'),
     bcrypt = require('bcryptjs'),
     session = require('express-session'),
-    redis = require("redis"),
-    client = redis.createClient(),
-    RedisStore = require('connect-redis')(session),
+    // redis = require("redis"),
+    // client = redis.createClient(),
+    // RedisStore = require('connect-redis')(session),
     passport = require('passport'), // Auth modules
     LocalStrategy = require('passport-local').Strategy,
     server = require('http').createServer(app), //Starting server
@@ -23,7 +23,9 @@ const express = require('express'),
     users = [];
     connections = [];
     Sql = require('orm'), // Setting Database connection
-    Sql.connect("mysql://root:@localhost/chat", function (err, db) {
+    port = process.env.PORT || 3000,
+
+    Sql.connect("mysql://freechatdb:freechatdb2@www.db4free.net/freechatdb", function (err, db) {
     if (err){
         console.log('Database connection failure');
         console.log(err);
@@ -42,22 +44,23 @@ const express = require('express'),
             },
         });
 
-        client.on('error', function (err) {
-            console.log("Error " + err);
-        });
+        // client.on('error', function (err) {
+        //     console.log("Error " + err);
+        // });
         
-        client.on('connect', function () {
-            console.log("redis connected...");
-        });
+        // client.on('connect', function () {
+        //     console.log("redis connected...");
+        // });
 
 app.use(express.static('public')); // Set assets folder
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(session({ store: new RedisStore(),
-        secret: 'keyboard cat',
+
+app.use(session({secret: 'keyboard cat',
         resave: false,
         saveUninitialized: false,
         cookie: { secure: true } })); 
+
  // Passport init
 app.use(passport.initialize());
 app.use(passport.session());
@@ -73,8 +76,8 @@ app.use((req,res,next)=>{
 // set the view engine to ejs
 app.set('view engine', 'ejs');
 
-server.listen(process.env.PORT || 3000);
-console.log('Server running...');
+server.listen(port);
+console.log('Server running on port',port);
 
 // Middleware
 // Passport middleware
