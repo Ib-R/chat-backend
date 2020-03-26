@@ -47,7 +47,7 @@ p{
     right: 5rem;
 }
 #img{
-    max-width: 8rem;
+    max-width: 40vw;
 }
 #messageForm{
     margin-right: 10px;
@@ -62,17 +62,9 @@ p{
 #message{
     padding-right: 7rem;
 }
-.own-msg{
+.msg, .own-msg{
     margin: 0.1rem;
-    padding: 0.7rem;
-    border-radius: 5px;
-    max-width: 50%;
-    overflow-wrap: break-word;
-}
-
-.msg{
-    margin: 0.1rem;
-    padding: 0.7rem;
+    padding: 0.4rem;
     border-radius: 5px;
     max-width: 50%;
     overflow-wrap: break-word;

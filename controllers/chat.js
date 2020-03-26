@@ -19,3 +19,10 @@ exports.uploadFile = (req, res) => {
         }
     });
 };
+
+// @desc    Web chat page
+// @route   GET /chat
+// @access  Private
+exports.webChat = (req, res) => {
+    res.render("chat", { user: req.user });
+}

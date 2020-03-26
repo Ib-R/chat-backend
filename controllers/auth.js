@@ -3,6 +3,17 @@ const passport = require("passport"),
     User = require("../models/User"),
     bcrypt = require("bcryptjs");
 
+passport.serializeUser(function(user, done) {
+    console.log('serializeUser');
+    done(null, user);
+});
+
+passport.deserializeUser( async function(user, done) {
+    console.log("Deserialized user id " + user.id);
+    const found = await User.findByPk(user.id)
+    found ? done(false, user) : done('user not found');
+});
+
 // @desc    Login user
 // @route   POST /login
 // @access  Public
@@ -21,8 +32,11 @@ exports.login = (req, res, next) => {
             if (err) {
                 return next(err);
             }
-            res.json({ user: user.username, message: info });
-            return console.log("End of login route");
+            
+            res.json({user: user.username, message: info});
+            // res.render("chat", { user: user }); // TODO: if same client
+            // res.json({user: user.username, message: info }); // TODO: if web client
+            return console.log(`User: ${req.user.username} has logged in`);
         });
     })(req, res, next);
 };
@@ -62,4 +76,24 @@ function passCheck(password, hash, callback) {
             callback(null, match);
         }
     });
+}
+
+// @desc    Check if authenticated
+exports.isAuth = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        next();
+    } else {
+        console.log("Not Authenticated");
+        res.redirect("/");
+    }
+}
+
+// @desc    Check if not authenticated
+exports.isNotAuth = (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        console.log("Not Authenticated");
+        next();
+    } else {
+        res.redirect("/chat");
+    }
 }
