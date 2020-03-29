@@ -55,6 +55,9 @@ p{
 .figure-caption{
     color: #f8f9fa;
 }
+.username {
+    font-size: 0.8rem;
+}
 #messageForm{
     margin-right: 10px;
     margin-left: 10px;
@@ -74,4 +77,9 @@ p{
     border-radius: 5px;
     max-width: 50%;
     overflow-wrap: break-word;
+}
+
+.msg small, .own-msg small {
+    color: #c5c5c5;
+    font-weight: 700;
 }

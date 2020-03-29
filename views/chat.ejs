@@ -8,7 +8,7 @@
 
     <link rel="icon" href="https://image.flaticon.com/teams/slug/freepik.jpg">
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="/css/chat.css">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.9.2/qs.min.js"
       integrity="sha256-TDxXjkAUay70ae/QJBEpGKkpVslXaHHayklIVglFRT4="
@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.js"></script>
-    <script src="js/push/push.min.js"></script>
+    <script src="/js/push/push.min.js"></script>
 
 </head>
 <body>
@@ -41,7 +41,7 @@
         </div>
     </div>
 
-    <iframe style="position: absolute;width: 100%;height: 100%;top:0;border: none;" src="bg/index.html"></iframe>
+    <iframe style="position: absolute;width: 100%;height: 100%;top:0;border: none;" src="/bg/index.html"></iframe>
 
     <script>
         $(function(){
@@ -143,14 +143,16 @@
             socket.on('new message', (data)=>{
                 if(data.user == '<%= user.username %>'){
                     $chat.append(`<div class="float-right own-msg bg-secondary">
-                        <p class="text-light"><strong>${data.user}</strong>: ${data.msg}</p>
+                        <strong class="username">${data.user}</strong>
+                        <p class="text-light">${data.msg} <small>${data.time}</small></p>
                         </div>
                         <div class="clearfix"></div>`);
                 }else{
                     $chat.append(`<div class="bg-primary float-left msg">
-                        <p class="text-light"><strong>${data.user}</strong>: ${data.msg}</p></div>
+                        <strong class="username">${data.user}</strong>
+                        <p class="text-light">${data.msg} <small>${data.time}</small></p>
+                        </div>
                         <div class="clearfix"></div>`);
-                    // updateUserHead(data.user);
                     spawnNotification('You Got new Message','https://image.flaticon.com/teams/slug/freepik.jpg','New Message');
                 }
                 updateScroll()
@@ -159,23 +161,22 @@
             socket.on('show image', (data)=>{
                 if(data.user == '<%= user.username %>'){
                     $chat.append(`<div class="float-right own-msg bg-secondary">
-                        <a data-fancybox="ownGallery" href="uploads/${data.img}">
+                        <a data-fancybox="ownGallery" href="uploads/${data.msg}">
                             <figure class="figure">
-                                <img id="img" src="uploads/${data.img}">
-                                <figcaption class="figure-caption"><strong>${data.user}</strong></figcaption>
+                                <img id="img" src="uploads/${data.msg}">
+                                <figcaption class="figure-caption row"><strong class="col-sm-10">${data.user}</strong> <small class="text-right">${data.time}</small></figcaption>
                             </figure>
                         </a></div>
                         <div class="clearfix"></div>`);
                 }else{
                     $chat.append(`<div class="bg-primary float-left msg">
-                        <a data-fancybox="gallery" href="uploads/${data.img}">
+                        <a data-fancybox="gallery" href="uploads/${data.msg}">
                             <figure class="figure">
-                                <img id="img" src="uploads/${data.img}">
-                                <figcaption class="figure-caption"><strong>${data.user}</strong></figcaption>
+                                <img id="img" src="uploads/${data.msg}">
+                                <figcaption class="figure-caption row"><strong class="col-sm-10">${data.user}</strong> <small class="text-right">${data.time}</small></figcaption>
                             </figure>
                         </a></div>
                         <div class="clearfix"></div>`);
-                    // updateUserHead(data.user);
                 }
                 updateScroll()
             });

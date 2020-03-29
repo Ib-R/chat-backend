@@ -1,4 +1,5 @@
 const uploader = require('../config/storage');
+const moment = require('moment');
 
 // @desc    Upload files
 // @route   POST /upload
@@ -25,4 +26,8 @@ exports.uploadFile = (req, res) => {
 // @access  Private
 exports.webChat = (req, res) => {
     res.render("chat", { user: req.user });
-}
+};
+
+exports.formatMsg = (msg, user) => {
+    return {msg, user, time: moment().format('hh:mm a')};
+};

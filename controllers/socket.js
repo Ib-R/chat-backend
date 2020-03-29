@@ -1,7 +1,7 @@
 const io = require("socket.io")(server),
-    // users = [],
     botName = 'Chat Bot',
     connections = [];
+const {formatMsg} = require('../controllers/chat');
 const {
     userJoin,
     getCurrentUser,
@@ -25,14 +25,14 @@ exports.startSocket = () => {
             console.log(getRoomUsers(room));
 
             // Welcome current user
-            socket.emit('new message', { msg: `Welcome to ${user.room} room!`, user: botName});
+            socket.emit('new message', formatMsg(`Welcome to ${user.room} room!`, botName));
 
             // Broadcast when a user connects
             socket.broadcast
               .to(user.room)
               .emit(
                 'new message',
-                { msg: `${user.username} has joined the chat`, user: botName}
+                formatMsg(`${user.username} has joined the chat`, botName)
               );
 
             // Send users and room info
@@ -56,9 +56,9 @@ exports.startSocket = () => {
             console.log(data);
             if (user) {
                 io.to(user.room)
-                    .emit("new message", { msg: data.msg, user: data.user });
+                    .emit("new message", formatMsg( data.msg, data.user ));
             }else {
-                socket.emit("new message", { msg: "There was a problem, Please try again later!", user: botName });
+                socket.emit("new message", formatMsg( "There was a problem, Please try again later!", botName ));
             }
         });
 
@@ -70,7 +70,7 @@ exports.startSocket = () => {
                 data = { img, user: username };
                 io.sockets
                 .to(user.room)
-                .emit("show image", data);
+                .emit("show image", formatMsg(img, username));
                 console.log("Show Image Called with this data:", img);
             }
         };
@@ -89,7 +89,7 @@ exports.startSocket = () => {
             const user = userLeave(socket.id);
             if (user) {
                 io.to(user.room)
-                .emit('new message', { msg:  `${user.username} has left the chat`, user: botName});
+                .emit('new message', formatMsg( `${user.username} has left the chat`, botName));
 
                 io.to(user.room).emit('roomUsers', {
                     room: user.room,
