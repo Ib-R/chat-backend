@@ -10,6 +10,10 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/chat.css">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.9.2/qs.min.js"
+      integrity="sha256-TDxXjkAUay70ae/QJBEpGKkpVslXaHHayklIVglFRT4="
+      crossorigin="anonymous"
+    ></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.css" />
@@ -41,7 +45,7 @@
 
     <script>
         $(function(){
-            const socket = io.connect(),
+            const socket = io(),
                 $messageForm = $('#messageForm'),
                 $message = $('#message'),
                 $chat = $('#chat'),
@@ -54,6 +58,11 @@
                 $imgUpload = $('#imgUploadInput'),
                 $imgForm = $('#imgForm');
                 var timer;
+
+            // Get username and room from URL
+            const { room } = Qs.parse(location.search, {
+                        ignoreQueryPrefix: true
+                    });
                 
             // Init Notfication
             function spawnNotification(theBody,theIcon,theTitle) {
@@ -73,14 +82,23 @@
             function updateScroll(){
                 chat.scrollTop = chat.scrollHeight;
             }
+
             $message.on('input', ()=>{
                 socket.emit('typing', '<%= user.username %>');
             });
+
+            // Join chatroom
+            socket.emit('joinRoom', { username:'<%= user.username %>', room });
+
             socket.on('typing', (data)=>{
                 $typing.html(data+' is typing...');
                 clearTimeout(timer);
                 timer = setTimeout(()=>{$typing.html('');},700);
             });
+
+            socket.on('roomUsers', data => {
+                updateUserHead(data.users)
+            })
             
             // File upload
             $imgUpload.on('change', (e)=>{
@@ -106,38 +124,58 @@
             });
             
             // Display usernames on header
-            function updateUserHead(user){
+            function updateUserHead(users){
                 const nameCheck = $userHead.html();
-                if( nameCheck === ''){
-                    $userHead.html(user);
-                }else if(nameCheck.indexOf(user) < 0){ // Check if username already exists
-                    $userHead.append(', '+user);
-                }
+                users.forEach((user, i) => {
+                    if(nameCheck.indexOf(user.username) < 0){ // Check if username already exists
+                        i ? $userHead.append(', '+user.username) : $userHead.append(user.username);
+                    }
+                });
             }
 
             $messageForm.submit((e)=>{
                 e.preventDefault();
-                data = {msg: $message.val(), user:'<%= user.username %>'};
+                data = {msg: $message.val().replace(/</g, ''), user:'<%= user.username %>'};
                 socket.emit('send message', data);
                 $message.val('');
             });
 
             socket.on('new message', (data)=>{
                 if(data.user == '<%= user.username %>'){
-                    $chat.append('<div class="float-right own-msg bg-secondary"><p class="text-light"><strong>'+data.user+'</strong>: '+data.msg+'</p></div><div class="clearfix"></div>');
+                    $chat.append(`<div class="float-right own-msg bg-secondary">
+                        <p class="text-light"><strong>${data.user}</strong>: ${data.msg}</p>
+                        </div>
+                        <div class="clearfix"></div>`);
                 }else{
-                    $chat.append('<div class="bg-primary float-left msg"><p class="text-light"><strong>'+data.user+'</strong>: '+data.msg+'</p></div><div class="clearfix"></div>');
-                    updateUserHead(data.user);
+                    $chat.append(`<div class="bg-primary float-left msg">
+                        <p class="text-light"><strong>${data.user}</strong>: ${data.msg}</p></div>
+                        <div class="clearfix"></div>`);
+                    // updateUserHead(data.user);
                     spawnNotification('You Got new Message','https://image.flaticon.com/teams/slug/freepik.jpg','New Message');
                 }
                 updateScroll()
             });
+            
             socket.on('show image', (data)=>{
                 if(data.user == '<%= user.username %>'){
-                    $chat.append('<div class="float-right own-msg bg-secondary"><a data-fancybox="ownGallery" href="uploads/'+data.img+'"><img id="img" src="uploads/'+data.img+'"></a></div><div class="clearfix"></div>');
+                    $chat.append(`<div class="float-right own-msg bg-secondary">
+                        <a data-fancybox="ownGallery" href="uploads/${data.img}">
+                            <figure class="figure">
+                                <img id="img" src="uploads/${data.img}">
+                                <figcaption class="figure-caption"><strong>${data.user}</strong></figcaption>
+                            </figure>
+                        </a></div>
+                        <div class="clearfix"></div>`);
                 }else{
-                    $chat.append('<div class="bg-primary float-left msg"><a data-fancybox="gallery" href="uploads/'+data.img+'"><img id="img" src="uploads/'+data.img+'"></a></div><div class="clearfix"></div>');
-                    updateUserHead(data.user);
+                    $chat.append(`<div class="bg-primary float-left msg">
+                        <a data-fancybox="gallery" href="uploads/${data.img}">
+                            <figure class="figure">
+                                <img id="img" src="uploads/${data.img}">
+                                <figcaption class="figure-caption"><strong>${data.user}</strong></figcaption>
+                            </figure>
+                        </a></div>
+                        <div class="clearfix"></div>`);
+                    // updateUserHead(data.user);
                 }
                 updateScroll()
             });

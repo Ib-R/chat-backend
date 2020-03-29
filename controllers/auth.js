@@ -18,6 +18,7 @@ passport.deserializeUser( async function(user, done) {
 // @route   POST /login
 // @access  Public
 exports.login = (req, res, next) => {
+    const room = req.body.room.replace(/</g, '').toLowerCase() || 'general'
     passport.authenticate("local", (err, user, info) => {
         res.header("Access-Control-Allow-Origin", "*");
         if (err) {
@@ -31,10 +32,10 @@ exports.login = (req, res, next) => {
             console.log("login function!");
             if (err) {
                 return next(err);
-            }
-            
-            res.json({user: user.username, message: info});
-            // res.render("chat", { user: user }); // TODO: if same client
+            }            
+            // res.json({user: user.username, room, message: info});
+
+            res.redirect(`/chat?room=${room}`); // TODO: if same client
             // res.json({user: user.username, message: info }); // TODO: if web client
             return console.log(`User: ${req.user.username} has logged in`);
         });
@@ -91,7 +92,6 @@ exports.isAuth = (req, res, next) => {
 // @desc    Check if not authenticated
 exports.isNotAuth = (req, res, next) => {
     if (!req.isAuthenticated()) {
-        console.log("Not Authenticated");
         next();
     } else {
         res.redirect("/chat");

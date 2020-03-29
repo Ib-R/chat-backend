@@ -1,13 +1,47 @@
-const io = require("socket.io").listen(server),
-    users = [],
+const io = require("socket.io")(server),
+    // users = [],
+    botName = 'Chat Bot',
     connections = [];
+const {
+    userJoin,
+    getCurrentUser,
+    userLeave,
+    getRoomUsers
+} = require("../controllers/user");
 
 // @desc    Start socket
 // @route   Socket
 // @access  Public
 exports.startSocket = () => {
-    io.sockets.on("connection", function(socket) {
+
+    io.on("connection",  socket => {
         connections.push(socket);
+
+        socket.on("joinRoom", ({ username, room }) => {
+            const user = userJoin(socket.id, username, room);
+            
+            socket.join(room);
+            
+            console.log(getRoomUsers(room));
+
+            // Welcome current user
+            socket.emit('new message', { msg: `Welcome to ${user.room} room!`, user: botName});
+
+            // Broadcast when a user connects
+            socket.broadcast
+              .to(user.room)
+              .emit(
+                'new message',
+                { msg: `${user.username} has joined the chat`, user: botName}
+              );
+
+            // Send users and room info
+            io.to(user.room).emit('roomUsers', {
+              room: user.room,
+              users: getRoomUsers(user.room)
+            });
+        });
+
         console.log(
             "Connection: %s sockets connected",
             connections.length,
@@ -15,29 +49,61 @@ exports.startSocket = () => {
             socket.id
         );
 
+        // Send Message
+        socket.on("send message", data => {
+            const user = getCurrentUser(socket.id);
+
+            console.log(data);
+            if (user) {
+                io.to(user.room)
+                    .emit("new message", { msg: data.msg, user: data.user });
+            }else {
+                socket.emit("new message", { msg: "There was a problem, Please try again later!", user: botName });
+            }
+        });
+
+        // Show image
+        showImg = (img, username) => {
+            const user = getCurrentUser(username);
+
+            if(typeof user !== 'undefined'){
+                data = { img, user: username };
+                io.sockets
+                .to(user.room)
+                .emit("show image", data);
+                console.log("Show Image Called with this data:", img);
+            }
+        };
+
+        socket.on("typing", data => {
+            const user = getCurrentUser(socket.id);
+            if (user) {     
+                socket
+                    .broadcast
+                    .to(user.room)
+                    .emit("typing", data);
+            }
+        });
+
         socket.on("disconnect", function(data) {
-            users.splice(users.indexOf(socket.username), 1);
+            const user = userLeave(socket.id);
+            if (user) {
+                io.to(user.room)
+                .emit('new message', { msg:  `${user.username} has left the chat`, user: botName});
+
+                io.to(user.room).emit('roomUsers', {
+                    room: user.room,
+                    users: getRoomUsers(user.room)
+                  });
+            }
+
+
+            // users.splice(users.indexOf(socket.username), 1);
             connections.splice(connections.indexOf(socket), 1);
             console.log(
                 "Disconnected: %s sockets connected",
                 connections.length
             );
-        });
-
-        // Send Message
-        socket.on("send message", data => {
-            console.log(data);
-            io.sockets.emit("new message", { msg: data.msg, user: data.user });
-        });
-        // Show image
-        showImg = (img, user) => {
-            data = { img: img, user: user };
-            io.sockets.emit("show image", data);
-            console.log("Show Image Called with this data:", img);
-        };
-
-        socket.on("typing", data => {
-            socket.broadcast.emit("typing", data);
         });
     });
 };

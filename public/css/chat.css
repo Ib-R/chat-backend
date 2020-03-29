@@ -49,6 +49,12 @@ p{
 #img{
     max-width: 40vw;
 }
+.figure {
+    margin: 0;
+}
+.figure-caption{
+    color: #f8f9fa;
+}
 #messageForm{
     margin-right: 10px;
     margin-left: 10px;
