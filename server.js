@@ -9,17 +9,17 @@ const fs = require("fs"),
     bodyParser = require("body-parser"),
     flash = require("connect-flash"),
     session = require("express-session"),
-    passport = require("passport"), // Auth modules
+    passport = require("passport"), // Auth module
     port = process.env.PORT || 3000;
 
-if (process.env.HTTPS) { // define server
+// Load env variables
+env.config();
+
+if (parseInt(process.env.HTTPS)) { // define server
     global.server = require("https").createServer(credentials, app);
 }else{
     global.server = require("http").createServer(app);
 }
-
-// Load env variables
-env.config({ path: '.env' });
 
 const {login, localStrategy, isAuth, isNotAuth} = require('./controllers/auth');
 const {webChat, uploadFile} = require('./controllers/chat');
@@ -34,7 +34,7 @@ app.use(
         secret: "keyboard cat",
         resave: false,
         saveUninitialized: false,
-        cookie: { secure: process.env.HTTPS }
+        cookie: { secure: parseInt(process.env.HTTPS) ? true : false }
     })
 );
 
@@ -76,7 +76,14 @@ app.get("/chat", isAuth, webChat);
 // Starting socket connection
 startSocket();
 
-server.on('clientError', (err, socket) => {
-    console.error(err);
-    socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+// server.on('clientError', (err, socket) => {
+//     console.error(err);
+//     socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+// });
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err, promise) => {
+    console.log(`Error: ${err.message}`);
+    // Close server and exit process
+    server.close(() => process.exit(1));
 });

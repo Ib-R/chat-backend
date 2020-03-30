@@ -18,7 +18,7 @@ passport.deserializeUser( async function(user, done) {
 // @route   POST /login
 // @access  Public
 exports.login = (req, res, next) => {
-    const room = req.body.room.replace(/</g, '').toLowerCase() || 'general'
+    const room = req.body.room ? req.body.room.replace(/</g, '').toLowerCase() : 'general';
     passport.authenticate("local", (err, user, info) => {
         res.header("Access-Control-Allow-Origin", "*");
         if (err) {

@@ -6,10 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>ChatApp</title>
 
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/bootstrap-4.0.0.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+
     <style>
         body{
             margin-top:30px;
@@ -22,58 +21,37 @@
 <body>
     <div class="container">
         <div id="userFormArea">
-                <form class="form-signin" id="userForm" action="/login" method="POST">
+            <form class="form-signin" id="userForm" action="/login" method="POST">
                 <div class="text-center">
-                    <img class="mb-4" src="https://getbootstrap.com/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">
+                    <img class="mb-4" src="imgs/cbuddy-icon.png" alt="" width="72" height="72">
                     <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
                 </div>
+
                 <% include  partials/msgs %>
 
-                    <!-- <div class="form-group"> -->
-                    <div class="form-label-group">
-                        <input type="text" placeholder="Enter Username" name="username" class="form-control" id="username">
-                        <label for="username">Enter Username</label>
-                    </div>  
-                    <div class="form-label-group"> 
-                        <input type="password" placeholder="Enter Password" name="password" class="form-control" id="password">
-                        <label for="password">Enter Password</label>
-                    </div>  
-                    <div class="form-label-group"> 
-                        <input type="text" placeholder="Enter Room" name="room" class="form-control" id="room">
-                        <label for="room">Enter Room</label>
-                    </div>  
+                <!-- <div class="form-group"> -->
+                <div class="form-label-group">
+                    <input type="text" placeholder="Enter Username" name="username" class="form-control" id="username">
+                    <label for="username">Enter Username</label>
+                </div>  
+                <div class="form-label-group"> 
+                    <input type="password" placeholder="Enter Password" name="password" class="form-control" id="password">
+                    <label for="password">Enter Password</label>
+                </div>  
+                <div class="form-label-group"> 
+                    <input type="text" placeholder="Enter Room" name="room" class="form-control" id="room">
+                    <label for="room">Enter Room</label>
+                </div>  
 
-                    <br>
-                    <input type="submit" class="btn btn-lg btn-primary btn-block" value="Login">
-                    <!-- </div> -->
-                    <p class="text-center mt-5 mb-3 text-muted">&copy;2018</p>
-                </form>
+                <br>
+                <input type="submit" class="btn btn-lg btn-primary btn-block" value="Login">
+                <!-- </div> -->
+                <p class="text-center mt-5 mb-3 text-muted">&copy;2018</p>
+            </form>
         </div>
+    </div>  
 
-    </div>
-          
-    <script>
-        $(function(){
-            const socket = io.connect(),
-                $messageForm = $('#messageForm'),
-                $message = $('#message'),
-                $chat = $('#chat'),
-                $messageArea = $('#messageArea'),
-                $userFormArea = $('#userFormArea'),
-                $userForm = $('#userForm'),
-                $users = $('#users'),
-                $username = $('#username'),
-                $password = $('#password');
-
-            $userForm.submit((e)=>{
-                // e.preventDefault();
-                userInfo = {username: $username.val(),password:$password.val()}
-                socket.emit('new user', userInfo, (data)=>{
-
-                });
-            });
-        });
-    </script>
-    
+    <script src="/js/jquery-3.3.1.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
 </body>
 </html>

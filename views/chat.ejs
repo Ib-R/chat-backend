@@ -1,165 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>ChatApp</title>
 
-    <link rel="icon" href="https://image.flaticon.com/teams/slug/freepik.jpg">
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/chat.css">
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.9.2/qs.min.js"
-      integrity="sha256-TDxXjkAUay70ae/QJBEpGKkpVslXaHHayklIVglFRT4="
-      crossorigin="anonymous"
-    ></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.3.5/jquery.fancybox.min.js"></script>
-    <script src="/js/push/push.min.js"></script>
-
+    <link rel="icon" href="imgs/cbuddy-icon.png" />
+    <link href="/css/bootstrap-4.0.0.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/chat.css" />
 </head>
+
 <body>
     <div id="chat-h" class="fixed-top">
-        <p id="username"></p><br>
-        <p id="typing" class="text-white"></p>
+        <div id="roomHead" data-toggle="modal" data-target="#membersModal">
+            <p id="roomName"></p>
+            <small id="membersCount"></small>
+            <small id="typing"></small>
+        </div>
     </div>
-    <% include  partials/msgs %>
+
+    <!-- Members Modal -->
+    <div class="modal fade" id="membersModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">
+                        Room Members
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <ul id="members"></ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Members Modal:END -->
+
+    <% include partials/msgs %>
+
     <div id="messageArea" class="container row">
-            <ul class="chat" id="chat"></ul>
+        <ul class="chat" id="chat"></ul>
         <div class="fixed-bottom row justify-content-md-center">
             <form id="messageForm" class="col col-md-8 row" autocomplete="off">
                 <label class="sr-only">Enter Message</label>
-                <input type="text" class="form-control" id="message" placeholder="Enter Message">
-                <input type="submit" class="btn btn-primary" id="msg-submit" value="Send">
+                <input type="text" class="form-control" id="message" placeholder="Enter Message" />
+                <input type="submit" class="btn btn-primary" id="msg-submit" value="Send" />
 
-                <label id="imgBtn" class="btn btn-primary" for="imgUploadInput">&#9974;</label>
-                <input type="file" style="display:none" name="img" id="imgUploadInput">
+                <label id="imgBtn" class="btn btn-primary" for="imgUploadInput">
+                    &#9974;
+                </label>
+                <input type="file" style="display:none" name="img" id="imgUploadInput" />
             </form>
         </div>
     </div>
 
     <iframe style="position: absolute;width: 100%;height: 100%;top:0;border: none;" src="/bg/index.html"></iframe>
 
+    <script src="/js/jquery-3.3.1.js"></script>
+    <script src="/js/qs-6.9.2.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script> -->
+    <link rel="stylesheet" href="/css/jquery.fancybox.min.css" />
+    <script src="/js/jquery.fancybox.min.js"></script>
+    <script src="/js/bootstrap-4.0.0.js"></script>
+    <script src="/js/push/push.min.js"></script>
+
     <script>
-        $(function(){
+        $(function () {
             const socket = io(),
-                $messageForm = $('#messageForm'),
-                $message = $('#message'),
-                $chat = $('#chat'),
-                $messageArea = $('#messageArea'),
-                $userFormArea = $('#userFormArea'),
-                $userForm = $('#userForm'),
-                $users = $('#users'),
-                $userHead = $('#username'),
-                $typing = $('#typing'),
-                $imgUpload = $('#imgUploadInput'),
-                $imgForm = $('#imgForm');
-                var timer;
+                $messageForm = $("#messageForm"),
+                $message = $("#message"),
+                $chat = $("#chat"),
+                $messageArea = $("#messageArea"),
+                $userFormArea = $("#userFormArea"),
+                $userForm = $("#userForm"),
+                $users = $("#users"),
+                $roomHead = $("#roomHead"),
+                $roomName = $("#roomName"),
+                $membersCount = $("#membersCount"),
+                $members = $("#members"),
+                $typing = $("#typing"),
+                $imgUpload = $("#imgUploadInput"),
+                $imgForm = $("#imgForm");
+            var timer;
 
             // Get username and room from URL
             const { room } = Qs.parse(location.search, {
-                        ignoreQueryPrefix: true
-                    });
-                
-            // Init Notfication
-            function spawnNotification(theBody,theIcon,theTitle) {
-                if(!document.hasFocus()){
-                    Push.create(theTitle, {
-                    body: theBody,
-                    icon: 'https://image.flaticon.com/teams/slug/freepik.jpg',
-                    timeout: 4000,
-                    onClick: function () {
-                        window.focus();
-                        this.close();
-                            }
-                        });
-                    }
-                }   
+                ignoreQueryPrefix: true
+            });
 
-            function updateScroll(){
+            // Init Notfication
+            function spawnNotification(theBody, theIcon, theTitle) {
+                if (!document.hasFocus()) {
+                    Push.create(theTitle, {
+                        body: theBody,
+                        icon:
+                            "https://image.flaticon.com/teams/slug/freepik.jpg",
+                        timeout: 4000,
+                        onClick: function () {
+                            window.focus();
+                            this.close();
+                        }
+                    });
+                }
+            }
+
+            function updateScroll() {
                 chat.scrollTop = chat.scrollHeight;
             }
 
-            $message.on('input', ()=>{
-                socket.emit('typing', '<%= user.username %>');
+            $message.on("input", () => {
+                socket.emit("typing", "<%= user.username %>");
             });
 
             // Join chatroom
-            socket.emit('joinRoom', { username:'<%= user.username %>', room });
-
-            socket.on('typing', (data)=>{
-                $typing.html(data+' is typing...');
-                clearTimeout(timer);
-                timer = setTimeout(()=>{$typing.html('');},700);
+            socket.emit("joinRoom", {
+                username: "<%= user.username %>",
+                room
             });
 
-            socket.on('roomUsers', data => {
-                updateUserHead(data.users)
-            })
-            
-            // File upload
-            $imgUpload.on('change', (e)=>{
-                var data = new FormData();
-                if($imgUpload[0].files[0] != null){
-                    data.append('img', $imgUpload[0].files[0]);
-                    data.append('username', '<%= user.username %>');
+            socket.on("typing", data => {
+                $membersCount.addClass("d-none");
+                $typing.html(data + " is typing...");
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    $typing.html("");
+                    $membersCount.removeClass("d-none");
+                }, 700);
+            });
 
-                    fetch('/upload', {
+            socket.on("roomUsers", data => {
+                updateRoomDetails(data);
+            });
+
+            // File upload
+            $imgUpload.on("change", e => {
+                var data = new FormData();
+                if ($imgUpload[0].files[0] != null) {
+                    data.append("img", $imgUpload[0].files[0]);
+                    data.append("username", "<%= user.username %>");
+
+                    fetch("/upload", {
                         body: data,
-                        method: 'POST',
+                        method: "POST"
                     })
-                    .then(res => res.json())
-                    .then(function(data){
-                        // alert(data.message);
-                    })
-                    .catch(() => {
-                        alert('error');
-                    });
+                        .then(res => res.json())
+                        .then(function (data) {
+                            // alert(data.message);
+                        })
+                        .catch(() => {
+                            alert("error");
+                        });
                 }
                 console.log($imgUpload[0].files[0]);
-                
             });
-            
+
             // Display usernames on header
-            function updateUserHead(users){
-                const nameCheck = $userHead.html();
-                users.forEach((user, i) => {
-                    if(nameCheck.indexOf(user.username) < 0){ // Check if username already exists
-                        i ? $userHead.append(', '+user.username) : $userHead.append(user.username);
-                    }
+            function updateRoomDetails(data) {
+                $roomName.html("");
+                $members.html("");
+                $roomName.append(capitalize(data.room));
+                $membersCount.html(`${data.users.length} members`);
+                data.users.forEach((user, i) => {
+                    // if(nameList){ // Check if username already exists
+                    $members.append(`<li>${user.username}</li>`);
+                    // }
                 });
             }
 
-            $messageForm.submit((e)=>{
+            function capitalize(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+
+            $messageForm.submit(e => {
                 e.preventDefault();
-                data = {msg: $message.val().replace(/</g, ''), user:'<%= user.username %>'};
-                socket.emit('send message', data);
-                $message.val('');
+                data = {
+                    msg: $message.val().replace(/</g, ""),
+                    user: "<%= user.username %>"
+                };
+                socket.emit("send message", data);
+                $message.val("");
             });
 
-            socket.on('new message', (data)=>{
-                if(data.user == '<%= user.username %>'){
+            socket.on("new message", data => {
+                if (data.user == "<%= user.username %>") {
                     $chat.append(`<div class="float-right own-msg bg-secondary">
                         <strong class="username">${data.user}</strong>
                         <p class="text-light">${data.msg} <small>${data.time}</small></p>
                         </div>
                         <div class="clearfix"></div>`);
-                }else{
+                } else {
                     $chat.append(`<div class="bg-primary float-left msg">
                         <strong class="username">${data.user}</strong>
                         <p class="text-light">${data.msg} <small>${data.time}</small></p>
                         </div>
                         <div class="clearfix"></div>`);
-                    spawnNotification('You Got new Message','https://image.flaticon.com/teams/slug/freepik.jpg','New Message');
+                    spawnNotification(
+                        "You Got new Message",
+                        "https://image.flaticon.com/teams/slug/freepik.jpg",
+                        "New Message"
+                    );
                 }
-                updateScroll()
+                updateScroll();
             });
-            
-            socket.on('show image', (data)=>{
-                if(data.user == '<%= user.username %>'){
+
+            socket.on("show image", data => {
+                if (data.user == "<%= user.username %>") {
                     $chat.append(`<div class="float-right own-msg bg-secondary">
                         <a data-fancybox="ownGallery" href="uploads/${data.msg}">
                             <figure class="figure">
@@ -168,7 +225,7 @@
                             </figure>
                         </a></div>
                         <div class="clearfix"></div>`);
-                }else{
+                } else {
                     $chat.append(`<div class="bg-primary float-left msg">
                         <a data-fancybox="gallery" href="uploads/${data.msg}">
                             <figure class="figure">
@@ -178,7 +235,7 @@
                         </a></div>
                         <div class="clearfix"></div>`);
                 }
-                updateScroll()
+                updateScroll();
             });
         });
     </script>
