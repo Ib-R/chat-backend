@@ -32,11 +32,15 @@ exports.login = (req, res, next) => {
             console.log("login function!");
             if (err) {
                 return next(err);
-            }            
-            // res.json({user: user.username, room, message: info});
+            }      
 
-            res.redirect(`/chat?room=${room}`); // TODO: if same client
-            // res.json({user: user.username, message: info }); // TODO: if web client
+            // If req is from same host
+            if (req.get('referer').includes(req.get('host'))) {
+                res.redirect(`/chat?room=${room}`);
+            } else {
+                res.json({user: user.username, room, message: info});
+            }
+
             return console.log(`User: ${req.user.username} has logged in`);
         });
     })(req, res, next);

@@ -71,7 +71,7 @@ exports.startSocket = () => {
                 io.sockets
                 .to(user.room)
                 .emit("show image", formatMsg(img, username));
-                console.log("Show Image Called with this data:", img);
+                // console.log("Show Image Called with this data:", img);
             }
         };
 
