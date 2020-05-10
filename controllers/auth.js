@@ -4,12 +4,12 @@ const passport = require("passport"),
     bcrypt = require("bcryptjs");
 
 passport.serializeUser(function(user, done) {
-    console.log('serializeUser');
+    // console.log('serializeUser');
     done(null, user);
 });
 
 passport.deserializeUser( async function(user, done) {
-    console.log("Deserialized user id " + user.id);
+    // console.log("Deserialized user id " + user.id);
     const found = await User.findByPk(user.id)
     found ? done(false, user) : done('user not found');
 });
@@ -29,7 +29,7 @@ exports.login = (req, res, next) => {
             return res.json({ message: info });
         }
         req.logIn(user, function(err) {
-            console.log("login function!");
+            // console.log("login function!");
             if (err) {
                 return next(err);
             }      
@@ -38,6 +38,9 @@ exports.login = (req, res, next) => {
             if (req.get('referer').includes(req.get('host'))) {
                 res.redirect(`/chat?room=${room}`);
             } else {
+                res.set({
+                    'Content-Security-Policy': "script-src 'self'"
+                });
                 res.json({user: user.username, room, message: info});
             }
 

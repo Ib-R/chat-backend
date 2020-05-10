@@ -1,0 +1,29 @@
+version: '3.6'
+
+services:
+  # Backend Node
+  chat-node:
+    container_name: chat-node
+    build: ./
+    command: npm run dev
+    working_dir: /user/src/chat-node
+    environment:
+      MYSQL_URI: mysql://root:secret@mysql/chat
+    links:
+      - mysql
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/user/src/chat-node
+  
+  # Database
+  mysql:
+    # container_name: mysql
+    build: ./mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: chat
+      MYSQL_HOST: mysql
+    ports:
+      - "3306:3306"

@@ -67,6 +67,9 @@ passport.use(localStrategy);
 
 // Routes
 app.get("/", isNotAuth, (req, res) => {
+    res.set({
+        'Content-Security-Policy': "script-src 'self'"
+    });
     res.render("login");
 });
 app.post("/login", login);
