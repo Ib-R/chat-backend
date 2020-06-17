@@ -17,6 +17,8 @@ exports.startSocket = () => {
     io.on("connection",  socket => {
         connections.push(socket);
 
+        socket.emit("connected", { id: socket.id });
+
         socket.on("joinRoom", ({ username, room }) => {
             const user = userJoin(socket.id, username, room);
             
@@ -83,6 +85,10 @@ exports.startSocket = () => {
                     .to(user.room)
                     .emit("typing", data);
             }
+        });
+
+        socket.on("call-cancel", (data) => {        
+            io.to(data.otherPeer).emit("call-rejected");
         });
 
         socket.on("disconnect", function(data) {
