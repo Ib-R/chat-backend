@@ -1,41 +1,47 @@
 const fs = require("fs"),
-    privateKey = fs.readFileSync("sslcert/key.pem", "utf8"), // SSL cert
-    certificate = fs.readFileSync("sslcert/cert.pem", "utf8"),
-    credentials = { key: privateKey, cert: certificate }, // add to createServer and change http to https
-    express = require("express"),
-    app = express(),
-    env = require('dotenv'),
-    cookieParser = require("cookie-parser"),
-    bodyParser = require("body-parser"),
-    flash = require("connect-flash"),
-    session = require("express-session"),
-    passport = require("passport"), // Auth module
-    port = process.env.PORT || 3000;
+	privateKey = fs.readFileSync("sslcert/key.pem", "utf8"), // SSL cert
+	certificate = fs.readFileSync("sslcert/cert.pem", "utf8"),
+	credentials = { key: privateKey, cert: certificate }, // add to createServer and change http to https
+	express = require("express"),
+	app = express(),
+	env = require("dotenv"),
+	cookieParser = require("cookie-parser"),
+	bodyParser = require("body-parser"),
+	flash = require("connect-flash"),
+	session = require("express-session"),
+	passport = require("passport"), // Auth module
+	port = process.env.PORT || 3000;
 
 // Load env variables
 env.config();
 
-if (parseInt(process.env.HTTPS)) { // define server
-    global.server = require("https").createServer(credentials, app);
-}else{
-    global.server = require("http").createServer(app);
+if (parseInt(process.env.HTTPS)) {
+	// define server
+	global.server = require("https").createServer(credentials, app);
+} else {
+	global.server = require("http").createServer(app);
 }
 
-const {login, localStrategy, isAuth, isNotAuth} = require('./controllers/auth');
-const {webChat, uploadFile} = require('./controllers/chat');
-const {startSocket} = require('./controllers/socket');
+const {
+	login,
+	localStrategy,
+	isAuth,
+	isNotAuth,
+} = require("./controllers/auth");
+const { webChat, uploadFile } = require("./controllers/chat");
+const { startSocket } = require("./controllers/socket");
 
 app.use(express.static("public")); // Set assets folder
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(
-    session({
-        secret: "keyboard cat",
-        resave: false,
-        saveUninitialized: false,
-        cookie: { secure: parseInt(process.env.HTTPS) ? true : false }
-    })
+	session({
+		secret: "keyboard cat",
+		resave: false,
+		saveUninitialized: false,
+		cookie: { secure: parseInt(process.env.HTTPS) ? true : false },
+	})
 );
 
 // Passport init
@@ -43,10 +49,10 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
 app.use((req, res, next) => {
-    res.locals.success_msg = req.flash("success_msg");
-    res.locals.error_msg = req.flash("error_msg");
-    res.locals.error = req.flash("error");
-    next();
+	res.locals.success_msg = req.flash("success_msg");
+	res.locals.error_msg = req.flash("error_msg");
+	res.locals.error = req.flash("error");
+	next();
 });
 
 // set the view engine to ejs
@@ -67,10 +73,10 @@ passport.use(localStrategy);
 
 // Routes
 app.get("/", isNotAuth, (req, res) => {
-    res.set({
-        'Content-Security-Policy': "script-src 'self'"
-    });
-    res.render("login");
+	res.set({
+		"Content-Security-Policy": "script-src 'self'",
+	});
+	res.render("login");
 });
 app.post("/login", login);
 app.post("/upload", uploadFile);
@@ -85,8 +91,8 @@ startSocket();
 // });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-    console.log(`Error: ${err.message}`);
-    // Close server and exit process
-    server.close(() => process.exit(1));
+process.on("unhandledRejection", (err, promise) => {
+	console.log(`Error: ${err.message}`);
+	// Close server and exit process
+	server.close(() => process.exit(1));
 });
