@@ -1,15 +1,15 @@
 # Node Chat
+
 Chat application that implments very useful technologies like:
+
 - Nodejs
 - Expressjs
 - SocketIO
 - Sequalize
 - Passport
 
-And also by using Docker and docker-compose it is very easy to deploy the application in any enviroment very quick.
-# Deployment
-For Docker deployment
-- Edit config/db file > connection string to process.env.MYSQL_URI
+Using Docker and docker-compose for easy to deployment on any enviroment very quick.
 
-For Normal deplyment
-- Edit config/db file > connection string to process.env.DB_CONNECTION_STRING
+# Deployment
+
+Copy .env-example to .env and edit the variables as you need
